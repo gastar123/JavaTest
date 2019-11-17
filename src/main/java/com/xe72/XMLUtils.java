@@ -22,61 +22,45 @@ public class XMLUtils {
     private TransformerFactory transformerFactory;
     private DocumentBuilder docBuilder;
 
-    public void writeXML(List<String> fieldList) {
-        try {
-            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-            docBuilder = docFactory.newDocumentBuilder();
-            Document doc = docBuilder.newDocument();
+    public void writeXML(List<String> fieldList) throws ParserConfigurationException, TransformerException {
+        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        docBuilder = docFactory.newDocumentBuilder();
+        Document doc = docBuilder.newDocument();
 
-            Element rootEl = doc.createElement("entries");
-            doc.appendChild(rootEl);
+        Element rootEl = doc.createElement("entries");
+        doc.appendChild(rootEl);
 
-            for (String field : fieldList) {
-                Element entryEl = doc.createElement("entry");
-                Element fieldEl = doc.createElement("field");
-                rootEl.appendChild(entryEl);
-                fieldEl.appendChild(doc.createTextNode(field));
-                entryEl.appendChild(fieldEl);
-            }
-
-            transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            DOMSource source = new DOMSource(doc);
-            StreamResult streamResult = new StreamResult(new File("1.xml"));
-
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.transform(source, streamResult);
-
-        } catch (ParserConfigurationException | TransformerException e) {
-            e.printStackTrace();
+        for (String field : fieldList) {
+            Element entryEl = doc.createElement("entry");
+            Element fieldEl = doc.createElement("field");
+            rootEl.appendChild(entryEl);
+            fieldEl.appendChild(doc.createTextNode(field));
+            entryEl.appendChild(fieldEl);
         }
+
+        transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        DOMSource source = new DOMSource(doc);
+        StreamResult streamResult = new StreamResult(new File("1.xml"));
+
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.transform(source, streamResult);
     }
 
-    public void transformXML() {
-        try {
-            Source xslt = new StreamSource(this.getClass().getClassLoader().getResourceAsStream("XMLTransformer.xsl"));
-            Transformer transformerXSLT = transformerFactory.newTransformer(xslt);
+    public void transformXML() throws TransformerException {
+        Source xslt = new StreamSource(this.getClass().getClassLoader().getResourceAsStream("XMLTransformer.xsl"));
+        Transformer transformerXSLT = transformerFactory.newTransformer(xslt);
 
-            Source text = new StreamSource(new File("1.xml"));
-            transformerXSLT.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformerXSLT.transform(text, new StreamResult(new File("2.xml")));
-        } catch (TransformerException e) {
-            e.printStackTrace();
-        }
+        Source text = new StreamSource(new File("1.xml"));
+        transformerXSLT.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformerXSLT.transform(text, new StreamResult(new File("2.xml")));
     }
 
-    public void parseXML() {
-        Document parsedDoc = null;
-        try {
-            parsedDoc = docBuilder.parse(new File("2.xml"));
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void parseXML() throws IOException, SAXException {
+        long sum = 0;
 
-        int sum = 0;
+        Document parsedDoc = docBuilder.parse(new File("2.xml"));
         NodeList entryElements = parsedDoc.getDocumentElement().getElementsByTagName("entry");
         for (int i = 0; i < entryElements.getLength(); i++) {
             Node entry = entryElements.item(i);
@@ -84,6 +68,6 @@ public class XMLUtils {
             sum += Integer.parseInt(entryAttr);
         }
 
-        System.out.println(sum);
+        System.out.println("Sum: " + sum);
     }
 }

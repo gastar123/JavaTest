@@ -27,29 +27,29 @@ public class DBUtils {
         this.rowCount = rowCount;
     }
 
-    public List<String> connectToDB() {
+    public List<String> connectToDB() throws SQLException {
         List<String> fieldList = new ArrayList<>();
         try (Connection connect = DriverManager.getConnection(url, user, password)) {
-            PreparedStatement clearTable = connect.prepareStatement("truncate table test");
-            clearTable.execute();
+            Statement clearTable = connect.createStatement();
+            clearTable.execute("truncate table test");
 
             PreparedStatement insertEntry = connect.prepareStatement("insert into test values (?)");
+            connect.setAutoCommit(false);
             for (int i = 1; i <= rowCount; i++) {
                 insertEntry.setInt(1, i);
                 insertEntry.addBatch();
             }
             int[] batch = insertEntry.executeBatch();
+            connect.commit();
             System.out.println("insert complete");
 
-            PreparedStatement getEntries = connect.prepareStatement("select * from test");
-            ResultSet result = getEntries.executeQuery();
+            Statement getEntries = connect.createStatement();
+            ResultSet result = getEntries.executeQuery("select * from test");
             while (result.next()) {
                 fieldList.add(result.getString("field"));
             }
-            System.out.println("select complete");
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("select complete");
         }
 
         return fieldList;
