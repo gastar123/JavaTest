@@ -1,3 +1,5 @@
+package com.xe72;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +10,6 @@ public class DBUtils {
     private String user;
     private String password;
     private int rowCount;
-    private XMLFileWriter xmlFileWriter = new XMLFileWriter();
 
     public void setUrl(String url) {
         this.url = url;
@@ -26,9 +27,9 @@ public class DBUtils {
         this.rowCount = rowCount;
     }
 
-    public void connectToDB() {
+    public List<String> connectToDB() {
+        List<String> fieldList = new ArrayList<>();
         try (Connection connect = DriverManager.getConnection(url, user, password)) {
-            List<String> fieldList = new ArrayList<>();
             PreparedStatement clearTable = connect.prepareStatement("truncate table test");
             clearTable.execute();
 
@@ -38,16 +39,19 @@ public class DBUtils {
                 insertEntry.addBatch();
             }
             int[] batch = insertEntry.executeBatch();
+            System.out.println("insert complete");
 
             PreparedStatement getEntries = connect.prepareStatement("select * from test");
             ResultSet result = getEntries.executeQuery();
             while (result.next()) {
                 fieldList.add(result.getString("field"));
             }
+            System.out.println("select complete");
 
-            xmlFileWriter.writeXML(fieldList);
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return fieldList;
     }
 }

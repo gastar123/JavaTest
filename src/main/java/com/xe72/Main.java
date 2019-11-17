@@ -1,9 +1,13 @@
+package com.xe72;
+
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
         DBUtils dbUtils = new DBUtils();
+        XMLUtils xmlUtils = new XMLUtils();
         System.out.println("Enter number");
         Scanner scanner = new Scanner(System.in);
 
@@ -12,6 +16,9 @@ public class Main {
         dbUtils.setPassword("123");
         dbUtils.setRowCount(scanner.nextInt());
 
-        dbUtils.connectToDB();
+        List<String> fieldList = dbUtils.connectToDB();
+        xmlUtils.writeXML(fieldList);
+        xmlUtils.transformXML();
+        xmlUtils.parseXML();
     }
 }
