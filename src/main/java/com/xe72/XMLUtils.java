@@ -1,55 +1,52 @@
 package com.xe72;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.*;
 import javax.xml.transform.*;
-import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import java.io.*;
 
 public class XMLUtils {
 
     private TransformerFactory transformerFactory;
-    private DocumentBuilder docBuilder;
+    private long sum;
+    private XMLOutputFactory factory;
+    private XMLStreamWriter writer;
 
-    public void writeXML(List<String> fieldList) throws ParserConfigurationException, TransformerException {
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        docBuilder = docFactory.newDocumentBuilder();
-        Document doc = docBuilder.newDocument();
+    public void createFile() throws FileNotFoundException, XMLStreamException {
+        factory = XMLOutputFactory.newFactory();
+        writer = factory.createXMLStreamWriter(new FileOutputStream("1.xml"));
+        writer.writeStartDocument();
+        writer.writeDTD("\n");
+        writer.writeStartElement("entries");
+        writer.writeDTD("\n");
+    }
 
-        Element rootEl = doc.createElement("entries");
-        doc.appendChild(rootEl);
+    public void closeFile() throws XMLStreamException {
+        writer.writeEndElement();
+        writer.writeEndDocument();
+        writer.flush();
+        writer.close();
+    }
 
-        for (String field : fieldList) {
-            Element entryEl = doc.createElement("entry");
-            Element fieldEl = doc.createElement("field");
-            rootEl.appendChild(entryEl);
-            fieldEl.appendChild(doc.createTextNode(field));
-            entryEl.appendChild(fieldEl);
-        }
-
-        transformerFactory = TransformerFactory.newInstance();
-        Transformer transformer = transformerFactory.newTransformer();
-        DOMSource source = new DOMSource(doc);
-        StreamResult streamResult = new StreamResult(new File("1.xml"));
-
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-        transformer.transform(source, streamResult);
+    public void addEntry(String field) throws XMLStreamException {
+//        StAX create!!!!!!!!!!!!
+        writer.writeDTD("\t");
+        writer.writeStartElement("entry");
+        writer.writeDTD("\n");
+        writer.writeDTD("\t\t");
+        writer.writeStartElement("field");
+        writer.writeCharacters(field);
+        writer.writeEndElement();
+        writer.writeDTD("\n");
+        writer.writeDTD("\t");
+        writer.writeEndElement();
+        writer.writeDTD("\n");
     }
 
     public void transformXML() throws TransformerException {
         Source xslt = new StreamSource(this.getClass().getClassLoader().getResourceAsStream("XMLTransformer.xsl"));
+        transformerFactory = TransformerFactory.newInstance();
         Transformer transformerXSLT = transformerFactory.newTransformer(xslt);
 
         Source text = new StreamSource(new File("1.xml"));
@@ -57,15 +54,31 @@ public class XMLUtils {
         transformerXSLT.transform(text, new StreamResult(new File("2.xml")));
     }
 
-    public void parseXML() throws IOException, SAXException {
-        long sum = 0;
+    public void parseXML() throws IOException, XMLStreamException {
+////        SAX parser!!!!!!!!!!!!!
+//        DefaultHandler handler = new DefaultHandler() {
+//            @Override
+//            public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+//                String field = attributes.getValue("field");
+//                if (field != null && !field.isEmpty()) {
+//                    sum += Integer.parseInt(field);
+//                }
+//            }
+//        };
+//
+//        SAXParserFactory factory = SAXParserFactory.newInstance();
+//        SAXParser parser = factory.newSAXParser();
+//        parser.parse(new File("2.xml"), handler);
 
-        Document parsedDoc = docBuilder.parse(new File("2.xml"));
-        NodeList entryElements = parsedDoc.getDocumentElement().getElementsByTagName("entry");
-        for (int i = 0; i < entryElements.getLength(); i++) {
-            Node entry = entryElements.item(i);
-            String entryAttr = entry.getAttributes().getNamedItem("field").getNodeValue();
-            sum += Integer.parseInt(entryAttr);
+
+//        StAX parser!!!!!!!!!!
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        XMLStreamReader parser = factory.createXMLStreamReader(new FileInputStream("2.xml"));
+        while (parser.hasNext()) {
+            int event = parser.next();
+            if (event == XMLStreamConstants.START_ELEMENT && parser.getLocalName().equals("entry")) {
+                sum += Integer.parseInt(parser.getAttributeValue(null, "field"));
+            }
         }
 
         System.out.println("Sum: " + sum);
